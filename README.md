@@ -8,12 +8,16 @@
 
 - Batch-generate photo watermarks from reusable JSON templates.
 - Render camera model, lens, focal length, aperture, shutter speed, ISO, shooting time, and brand logos from EXIF data.
+- Preserve source ICC color profiles during preview conversion and final export, keeping Display P3, sRGB, and other color spaces mapped consistently.
+- Parse GPS coordinates from EXIF metadata and reverse-geocode them into readable state, city, or locality text for location-aware watermarks.
 - Support multiple layout styles, including classic EXIF watermarks, centered logo watermarks, blurred backgrounds, rounded corners, shadows, and social-media-friendly margins.
 - Keep template files editable so custom text, logos, and styles can be adjusted without changing code.
 - Provide a Flask-based local web interface for previewing and processing images.
 
 - 支持通过可复用的 JSON 模板批量生成照片水印。
 - 可从 EXIF 信息中渲染相机型号、镜头、焦距、光圈、快门、ISO、拍摄时间和品牌 Logo。
+- 在预览转换和最终导出时保留源图 ICC 色彩配置，避免 Display P3、sRGB 等色彩空间映射不一致造成偏色。
+- 可从 EXIF GPS 信息中解析经纬度，并反向解析为州、城市或街区等可读地点，用于带地点信息的时间水印。
 - 支持多种版式：经典 EXIF 水印、居中 Logo 水印、背景模糊、圆角、阴影和适合社交媒体分享的留白样式。
 - 模板文件可直接编辑，方便在不改代码的情况下调整文字、Logo 和视觉样式。
 - 提供基于 Flask 的本地网页界面，用于预览和处理图片。
@@ -42,6 +46,10 @@ Then open the local address printed in the terminal and process images through t
 
 随后打开终端中显示的本地地址，即可在网页界面中处理图片。
 
+Location reverse-geocoding can be configured in `config/config.ini`. Results are cached locally in `config/geocoding_cache.json` to reduce repeated network lookups.
+
+反向解析位置信息可在 `config/config.ini` 中配置，解析结果会缓存在 `config/geocoding_cache.json`，减少重复网络查询。
+
 ## Templates / 模板
 
 | Template / 模板 | Description / 描述 | Preview / 效果 |
@@ -54,15 +62,7 @@ Then open the local address printed in the terminal and process images through t
 | [normal2](./static/normal2.json) | Folder name plus shooting time with simple orange text.<br>文件夹名称加拍摄时间，橙色文字，简洁实用。 | ![normal2](./static/normal2.jpeg) |
 | [center_logo](./static/center_logo.json) | Center logo watermark with customizable text around it.<br>中心 Logo 水印，可自定义四周文字内容。 | ![center_logo](./static/center_logo.jpeg) |
 
-## Development / 开发
-
-Run tests with:
-
-运行测试：
-
-```bash
-python -m pytest
-```
+## Build / 打包
 
 Build scripts and CI workflows are included under `.github/workflows`.
 

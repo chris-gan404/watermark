@@ -104,6 +104,15 @@
         .config-label {
             @apply text-xs font-semibold text-slate-600 uppercase tracking-wide;
         }
+
+        .watermark-stage {
+            touch-action: none;
+        }
+
+        .watermark-overlay {
+            touch-action: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 h-screen w-full flex flex-col overflow-hidden text-sm"
@@ -195,14 +204,14 @@
                 </div>
 
                 <div class="flex-1 flex flex-col min-h-[300px]">
-                    <div class="flex items-center justify-between mb-2">
+                    <div class="mb-2 space-y-2">
                         <label class="config-label">模板配置</label>
-                        <div class="flex items-center gap-2">
-                            <label class="text-xs text-slate-500">选择模板:</label>
+                        <div class="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
+                            <label class="text-xs text-slate-500 whitespace-nowrap">选择模板</label>
                             <select x-model="config.template_name"
                                     @change="switchTemplate($event.target.value)"
                                     :disabled="isStatic"
-                                    class="h-8 px-2 text-xs rounded-lg border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all disabled:bg-slate-50 disabled:opacity-50">
+                                    class="min-w-0 w-full h-9 px-3 text-sm rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all disabled:bg-slate-50 disabled:opacity-50">
                                 <template x-for="template in availableTemplates" :key="template">
                                     <option :value="template" x-text="template"></option>
                                 </template>
@@ -210,19 +219,17 @@
                             <button @click="createNewTemplate()"
                                     :disabled="isStatic"
                                     title="新建空白模板"
-                                    class="h-8 px-2 text-xs rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600 text-slate-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                                    class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600 text-slate-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
-                                新建
                             </button>
                             <button @click="saveAsTemplate()"
                                     title="另存为新模板"
-                                    class="h-8 px-2 text-xs rounded-lg border border-slate-200 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 text-slate-500 transition-all flex items-center gap-1">
+                                    class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 text-slate-500 transition-all flex items-center justify-center shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                                 </svg>
-                                另存为
                             </button>
                         </div>
                     </div>
@@ -480,10 +487,10 @@
         </div>
 
         <!-- Col 3: 预览与执行 -->
-        <div class="col-span-12 lg:col-span-3 flex flex-col h-full gap-5">
+        <div class="col-span-12 lg:col-span-3 flex flex-col h-full gap-5 overflow-y-auto pr-1">
 
             <!-- 预览卡片 -->
-            <div class="flex-1 bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 flex flex-col overflow-hidden animate-slide-up" style="animation-delay: 0.2s">
+            <div class="flex-1 min-h-[280px] bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 flex flex-col overflow-hidden animate-slide-up" style="animation-delay: 0.2s">
                 <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -494,30 +501,101 @@
                     </div>
                 </div>
 
-                <div class="flex-1 bg-gradient-to-br from-slate-50 to-slate-100/50 flex items-center justify-center p-4 relative overflow-hidden">
+                <div class="flex-1 min-h-0 bg-gradient-to-br from-slate-50 to-slate-100/50 p-4 relative overflow-hidden">
                     <!-- Empty -->
-                    <div x-show="!preview.url || !preview.isFile" class="text-center">
-                        <div class="w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                            <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                    <div x-show="!preview.url || !preview.isFile" class="absolute inset-0 flex items-center justify-center text-center">
+                        <div>
+                            <div class="w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                                <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs text-slate-400">点击文件预览</span>
                         </div>
-                        <span class="text-xs text-slate-400">点击文件预览</span>
                     </div>
 
                     <!-- Image -->
                     <div x-show="preview.url && preview.isFile"
-                         class="w-full h-full flex flex-col"
+                         class="absolute inset-4 flex flex-col"
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 transform scale-95"
                          x-transition:enter-end="opacity-100 transform scale-100">
                         <div class="text-xs text-center text-slate-500 mb-2 font-mono truncate bg-white/90 backdrop-blur py-1.5 px-3 rounded-xl border border-slate-200 shadow-sm"
                              x-text="preview.name"></div>
-                        <div class="flex-1 relative rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
-                            <img x-effect="if(preview.isFile) $el.src = preview.url"
-                                 class="absolute inset-0 w-full h-full object-contain p-2">
+                        <div x-ref="previewStage"
+                             class="watermark-stage flex-1 relative rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden"
+                             @click="placeWatermark($event)">
+                            <img x-ref="previewImage"
+                                 x-effect="if(preview.isFile) $el.src = preview.url"
+                                 @load="onPreviewImageLoad()"
+                                 class="absolute inset-0 w-full h-full object-contain p-2 pointer-events-none">
+                            <img x-show="hasWatermarkReady"
+                                 :src="selectedWatermarkUrl"
+                                 :style="watermarkOverlayStyle()"
+                                 @load="onWatermarkImageLoad($event)"
+                                 @click.stop
+                                 @pointerdown.stop.prevent="startWatermarkDrag($event)"
+                                 draggable="false"
+                                 class="watermark-overlay absolute z-10 cursor-move drop-shadow-lg">
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 水印控制 -->
+            <div class="bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 animate-slide-up" style="animation-delay: 0.25s">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-5" />
+                        </svg>
+                        <h3 class="font-bold text-slate-700">运行时水印</h3>
+                    </div>
+                    <button @click="fetchWatermarks()"
+                            title="刷新水印"
+                            class="p-2 rounded-lg hover:bg-primary-50 text-slate-400 hover:text-primary-600 transition-all duration-200">
+                        <svg class="w-4 h-4" :class="{'animate-spin': loading.watermarks}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="config-label">选择水印</label>
+                        <select x-model="watermark.selected"
+                                @change="selectWatermark($event.target.value)"
+                                class="mt-1 w-full h-10 px-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-sm">
+                            <option value="">未选择</option>
+                            <template x-for="item in watermarks" :key="item.name">
+                                <option :value="item.name" x-text="item.name"></option>
+                            </template>
+                        </select>
+                        <p x-show="!loading.watermarks && watermarks.length === 0" class="mt-1 text-xs text-slate-400">请将 PNG/JPG/WebP 水印放入项目根目录的 watermark 文件夹</p>
+                    </div>
+
+                    <div>
+                        <label class="config-label">大小: <span class="text-primary-600 font-bold" x-text="`${Math.round(watermark.scale * 100)}%`"></span></label>
+                        <input type="range" x-model.number="watermark.scale" min="0.02" max="1" step="0.01"
+                               class="mt-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-500">
+                    </div>
+
+                    <div>
+                        <label class="config-label">透明度: <span class="text-primary-600 font-bold" x-text="`${Math.round(watermark.opacity * 100)}%`"></span></label>
+                        <input type="range" x-model.number="watermark.opacity" min="0.05" max="1" step="0.05"
+                               class="mt-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-500">
+                    </div>
+
+                    <button @click="exportWatermark()"
+                            :disabled="!canExportWatermark"
+                            class="w-full py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" :class="{'animate-spin': loading.watermarkExport}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path x-show="!loading.watermarkExport" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v10m0 0l-3-3m3 3l3-3M5 20h14" />
+                            <path x-show="loading.watermarkExport" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9" />
+                        </svg>
+                        导出带水印图片
+                    </button>
                 </div>
             </div>
 
@@ -779,7 +857,9 @@
                     const app = window.Alpine.store('app');
                     app.preview.url = `/api/v1/file?path=${encodeURIComponent(this.value)}`;
                     app.preview.name = this.label;
+                    app.preview.path = this.value;
                     app.preview.isFile = true;
+                    queueMicrotask(() => app.updatePreviewGeometry());
                 } else if (this.hasChildren) {
                     // 文件夹：切换折叠状态
                     this.toggleFolder();
@@ -809,14 +889,30 @@
     function app() {
         return {
             isStatic: true,
-            loading: {files: false, process: false},
+            loading: {files: false, process: false, watermarks: false, watermarkExport: false},
             config: {input_folder: '', output_folder: '', template: '{}', template_name: '', quality: 100, override_existed: false},
             availableTemplates: [],
+            watermarks: [],
             inputTreeData: [],
             outputTreeData: [],
             treeKey: 0,
             selectedItems: [],
-            preview: {url: '', name: '', isFile: false},
+            preview: {url: '', name: '', path: '', isFile: false},
+            previewGeometry: {x: 0, y: 0, width: 0, height: 0, naturalWidth: 0, naturalHeight: 0},
+            watermark: {
+                selected: '',
+                x: 0.05,
+                y: 0.05,
+                scale: 0.2,
+                opacity: 1,
+                aspect: 1,
+                dragging: false,
+                dragMoved: false,
+                dragOffsetX: 0,
+                dragOffsetY: 0,
+                suppressStageClick: false,
+                dragTarget: null
+            },
             aceEditor: null,
             progress: {
                 active: false,
@@ -880,6 +976,19 @@
                 return this.isStatic && this.selectedItems.length > 0 && !this.progress.active;
             },
 
+            get selectedWatermarkUrl() {
+                const item = this.watermarks.find(item => item.name === this.watermark.selected);
+                return item ? item.url : '';
+            },
+
+            get hasWatermarkReady() {
+                return !!(this.preview.isFile && this.preview.url && this.selectedWatermarkUrl && this.previewGeometry.width > 0);
+            },
+
+            get canExportWatermark() {
+                return this.hasWatermarkReady && !!this.preview.path && !this.loading.watermarkExport;
+            },
+
             async init() {
                 Alpine.store('app', this);
                 this.initEditor();
@@ -902,7 +1011,9 @@
                 };
 
                 await this.fetchConfig();
+                await this.fetchWatermarks();
                 await this.fetchFiles();
+                window.addEventListener('resize', () => this.updatePreviewGeometry());
             },
 
             initEditor() {
@@ -925,6 +1036,202 @@
 
             async resetConfig() {
                 await this.fetchConfig();
+            },
+
+            async fetchWatermarks() {
+                this.loading.watermarks = true;
+                try {
+                    const res = await fetch('/api/v1/watermarks', {cache: 'no-store'});
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    const json = await res.json();
+                    this.watermarks = json.watermarks || [];
+                    if (this.watermark.selected && !this.watermarks.some(item => item.name === this.watermark.selected)) {
+                        this.watermark.selected = '';
+                    }
+                    if (!this.watermark.selected && this.watermarks.length > 0) {
+                        this.selectWatermark(this.watermarks[0].name);
+                    }
+                } catch (e) {
+                    this.toast("水印列表加载失败: " + e.message, 'error');
+                } finally {
+                    this.loading.watermarks = false;
+                }
+            },
+
+            selectWatermark(name) {
+                this.watermark.selected = name;
+                this.watermark.x = 0.05;
+                this.watermark.y = 0.05;
+                queueMicrotask(() => this.updatePreviewGeometry());
+            },
+
+            onPreviewImageLoad() {
+                this.updatePreviewGeometry();
+            },
+
+            onWatermarkImageLoad(event) {
+                const img = event.target;
+                if (img.naturalWidth && img.naturalHeight) {
+                    this.watermark.aspect = img.naturalHeight / img.naturalWidth;
+                    this.clampWatermarkPosition(this.watermark.x, this.watermark.y);
+                }
+            },
+
+            updatePreviewGeometry() {
+                const stage = this.$refs.previewStage;
+                const img = this.$refs.previewImage;
+                if (!stage || !img || !img.naturalWidth || !img.naturalHeight) {
+                    this.previewGeometry = {x: 0, y: 0, width: 0, height: 0, naturalWidth: 0, naturalHeight: 0};
+                    return;
+                }
+
+                const padding = 8;
+                const maxWidth = Math.max(1, stage.clientWidth - padding * 2);
+                const maxHeight = Math.max(1, stage.clientHeight - padding * 2);
+                const imageRatio = img.naturalWidth / img.naturalHeight;
+                const stageRatio = maxWidth / maxHeight;
+                let width = maxWidth;
+                let height = maxHeight;
+
+                if (imageRatio > stageRatio) {
+                    height = width / imageRatio;
+                } else {
+                    width = height * imageRatio;
+                }
+
+                this.previewGeometry = {
+                    x: (stage.clientWidth - width) / 2,
+                    y: (stage.clientHeight - height) / 2,
+                    width,
+                    height,
+                    naturalWidth: img.naturalWidth,
+                    naturalHeight: img.naturalHeight
+                };
+                this.clampWatermarkPosition(this.watermark.x, this.watermark.y);
+            },
+
+            watermarkPreviewSize() {
+                const geometry = this.previewGeometry;
+                const width = Math.max(24, geometry.width * this.watermark.scale);
+                const height = width * this.watermark.aspect;
+                return {
+                    width,
+                    height,
+                    widthRatio: geometry.width ? width / geometry.width : this.watermark.scale,
+                    heightRatio: geometry.height ? height / geometry.height : this.watermark.scale
+                };
+            },
+
+            watermarkOverlayStyle() {
+                const geometry = this.previewGeometry;
+                const size = this.watermarkPreviewSize();
+                return [
+                    `left: ${geometry.x + geometry.width * this.watermark.x}px`,
+                    `top: ${geometry.y + geometry.height * this.watermark.y}px`,
+                    `width: ${size.width}px`,
+                    `height: ${size.height}px`,
+                    `opacity: ${this.watermark.opacity}`,
+                ].join('; ');
+            },
+
+            clampWatermarkPosition(x, y) {
+                const size = this.watermarkPreviewSize();
+                const maxX = Math.max(0, 1 - size.widthRatio);
+                const maxY = Math.max(0, 1 - size.heightRatio);
+                this.watermark.x = Math.min(Math.max(x, 0), maxX);
+                this.watermark.y = Math.min(Math.max(y, 0), maxY);
+            },
+
+            placeWatermark(event) {
+                if (!this.hasWatermarkReady || this.watermark.dragging) return;
+                if (this.watermark.suppressStageClick) {
+                    this.watermark.suppressStageClick = false;
+                    return;
+                }
+                const stage = this.$refs.previewStage;
+                const geometry = this.previewGeometry;
+                const size = this.watermarkPreviewSize();
+                const rect = stage.getBoundingClientRect();
+                const x = (event.clientX - rect.left - geometry.x) / geometry.width - size.widthRatio / 2;
+                const y = (event.clientY - rect.top - geometry.y) / geometry.height - size.heightRatio / 2;
+                this.clampWatermarkPosition(x, y);
+            },
+
+            startWatermarkDrag(event) {
+                if (!this.hasWatermarkReady) return;
+                const overlayRect = event.currentTarget.getBoundingClientRect();
+                this.watermark.dragging = true;
+                this.watermark.dragMoved = false;
+                this.watermark.dragTarget = event.currentTarget;
+                this.watermark.dragOffsetX = event.clientX - overlayRect.left;
+                this.watermark.dragOffsetY = event.clientY - overlayRect.top;
+                this.watermark.moveHandler = (moveEvent) => this.dragWatermark(moveEvent);
+                this.watermark.upHandler = (upEvent) => this.stopWatermarkDrag(upEvent);
+                event.currentTarget.setPointerCapture?.(event.pointerId);
+                document.addEventListener('pointermove', this.watermark.moveHandler);
+                document.addEventListener('pointerup', this.watermark.upHandler, {once: true});
+            },
+
+            dragWatermark(event) {
+                if (!this.watermark.dragging) return;
+                this.watermark.dragMoved = true;
+                const stage = this.$refs.previewStage;
+                const geometry = this.previewGeometry;
+                const rect = stage.getBoundingClientRect();
+                const x = (event.clientX - rect.left - geometry.x - this.watermark.dragOffsetX) / geometry.width;
+                const y = (event.clientY - rect.top - geometry.y - this.watermark.dragOffsetY) / geometry.height;
+                this.clampWatermarkPosition(x, y);
+            },
+
+            stopWatermarkDrag(event) {
+                if (event) {
+                    this.dragWatermark(event);
+                    this.watermark.dragTarget?.releasePointerCapture?.(event.pointerId);
+                }
+                this.watermark.dragging = false;
+                this.watermark.suppressStageClick = true;
+                if (this.watermark.moveHandler) {
+                    document.removeEventListener('pointermove', this.watermark.moveHandler);
+                }
+                window.setTimeout(() => {
+                    this.watermark.suppressStageClick = false;
+                }, 200);
+            },
+
+            async exportWatermark() {
+                if (!this.canExportWatermark) return;
+                this.loading.watermarkExport = true;
+                try {
+                    const res = await fetch('/api/v1/watermark/export', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            image_path: this.preview.path,
+                            watermark_name: this.watermark.selected,
+                            x: this.watermark.x,
+                            y: this.watermark.y,
+                            scale: this.watermark.scale,
+                            opacity: this.watermark.opacity
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok) {
+                        throw new Error(json.error || '导出失败');
+                    }
+
+                    this.preview.url = `/api/v1/file?path=${encodeURIComponent(json.output_path)}`;
+                    this.preview.name = json.output_name || json.output_path;
+                    this.preview.path = json.output_path;
+                    this.preview.isFile = true;
+                    this.toast("带水印图片已导出", 'success');
+                    await this.fetchFiles(false);
+                } catch (e) {
+                    this.toast("导出失败: " + e.message, 'error');
+                } finally {
+                    this.loading.watermarkExport = false;
+                }
             },
 
             async fetchConfig() {

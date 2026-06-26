@@ -12,3 +12,5 @@ dist
 logs
 config/geocoding_cache.json
 tmp
+watermark/*
+!watermark/.gitkeep

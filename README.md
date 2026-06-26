@@ -13,6 +13,7 @@
 - Support multiple layout styles, including classic EXIF watermarks, centered logo watermarks, blurred backgrounds, rounded corners, shadows, and social-media-friendly margins.
 - Keep template files editable so custom text, logos, and styles can be adjusted without changing code.
 - Provide a Flask-based local web interface for previewing and processing images.
+- Choose runtime watermark images from the root `watermark/` folder, drag them anywhere on the preview image, and export the positioned result.
 
 - 支持通过可复用的 JSON 模板批量生成照片水印。
 - 可从 EXIF 信息中渲染相机型号、镜头、焦距、光圈、快门、ISO、拍摄时间和品牌 Logo。
@@ -21,6 +22,7 @@
 - 支持多种版式：经典 EXIF 水印、居中 Logo 水印、背景模糊、圆角、阴影和适合社交媒体分享的留白样式。
 - 模板文件可直接编辑，方便在不改代码的情况下调整文字、Logo 和视觉样式。
 - 提供基于 Flask 的本地网页界面，用于预览和处理图片。
+- 支持从项目根目录 `watermark/` 文件夹选择运行时水印，在预览图上拖拽到任意位置，并导出带水印图片。
 
 ## Installation / 安装
 
@@ -49,6 +51,12 @@ Then open the local address printed in the terminal and process images through t
 Location reverse-geocoding can be configured in `config/config.ini`. Results are cached locally in `config/geocoding_cache.json` to reduce repeated network lookups.
 
 反向解析位置信息可在 `config/config.ini` 中配置，解析结果会缓存在 `config/geocoding_cache.json`，减少重复网络查询。
+
+### Runtime watermark / 运行时水印
+
+Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG, and WebP files are supported. After starting the web app, select a preview image, choose a watermark in the "运行时水印" panel, adjust its size and opacity, drag it to the desired position, and click "导出带水印图片". The exported image is written to the configured output folder while preserving the source ICC color profile when available.
+
+将水印图片放入项目根目录的 `watermark/` 文件夹，支持 PNG、JPG、JPEG 和 WebP。启动网页后，先选择需要预览的图片，再在“运行时水印”区域选择水印，调整大小和透明度，拖拽到目标位置后点击“导出带水印图片”。导出的图片会写入配置的输出目录，并在可用时保留源图 ICC 色彩配置。
 
 ## Templates / 模板
 
@@ -87,3 +95,9 @@ Permitted uses include personal study, research, testing, hobby projects, educat
 This project may work with [ExifTool](https://exiftool.org/). ExifTool is distributed under its own [GPL v1 + Artistic License 2.0](https://exiftool.org/#license), and its license terms are not changed by this repository's license.
 
 本项目可能配合 [ExifTool](https://exiftool.org/) 使用。ExifTool 基于其自身的 [GPL v1 + Artistic License 2.0](https://exiftool.org/#license) 发布，本仓库的许可证不会改变 ExifTool 的原始授权条款。
+
+## Attribution / 致谢
+
+This repository keeps the original `semi-utils` project attribution and license terms, and extends the tool with local workflow fixes plus the runtime draggable watermark feature.
+
+本仓库保留原 `semi-utils` 项目的作者署名和许可证条款，并在此基础上扩展了本地工作流修复以及运行时可拖拽水印功能。

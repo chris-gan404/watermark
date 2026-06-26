@@ -5,8 +5,10 @@ import webbrowser
 import queue
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import quote
 
 from flask import render_template, jsonify, request, send_file, Flask, Response, stream_with_context
+from PIL import Image, ImageEnhance, ImageOps
 
 from core import BASE_DIR, CONFIG_PATH
 from core.configs import load_config, load_project_info
@@ -28,6 +30,85 @@ init_from_config(config)
 
 # 创建 Flask app
 api = Flask(__name__)
+WATERMARK_DIR = BASE_DIR / 'watermark'
+WATERMARK_SUFFIXES = {'.png', '.jpg', '.jpeg', '.webp'}
+WATERMARK_DIR.mkdir(exist_ok=True)
+
+
+def _is_supported_watermark(path: Path) -> bool:
+    return path.is_file() and path.suffix.lower() in WATERMARK_SUFFIXES
+
+
+def _get_watermark_path(name: str) -> Path:
+    watermark_path = (WATERMARK_DIR / name).resolve()
+    watermark_path.relative_to(WATERMARK_DIR.resolve())
+    if not _is_supported_watermark(watermark_path):
+        raise FileNotFoundError(name)
+    return watermark_path
+
+
+def _unique_output_path(path: Path) -> Path:
+    if config.getboolean('DEFAULT', 'override_existed') or not path.exists():
+        return path
+
+    for index in range(1, 1000):
+        candidate = path.with_name(f"{path.stem}_{index}{path.suffix}")
+        if not candidate.exists():
+            return candidate
+    raise RuntimeError(f"Unable to find available output filename for {path.name}")
+
+
+def _apply_watermark(input_path: str, watermark_name: str, x: float, y: float, scale: float, opacity: float) -> Path:
+    source_path = Path(os.path.abspath(input_path))
+    watermark_path = _get_watermark_path(watermark_name)
+    input_folder = Path(config.get('DEFAULT', 'input_folder')).resolve()
+    output_folder = Path(config.get('DEFAULT', 'output_folder')).resolve()
+
+    try:
+        relative_path = source_path.resolve().relative_to(input_folder)
+        output_path = output_folder / relative_path
+    except ValueError:
+        output_path = output_folder / source_path.name
+
+    output_path = output_path.with_name(f"{output_path.stem}_watermark{output_path.suffix}")
+    if output_path.suffix.lower() in {'.heic', '.heif'}:
+        output_path = output_path.with_suffix('.jpg')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path = _unique_output_path(output_path)
+
+    with Image.open(source_path) as source_image:
+        icc_profile = source_image.info.get("icc_profile")
+        base = ImageOps.exif_transpose(source_image).convert("RGBA")
+
+    with Image.open(watermark_path) as watermark_image:
+        watermark = ImageOps.exif_transpose(watermark_image).convert("RGBA")
+
+    scale = min(max(float(scale), 0.01), 1.0)
+    opacity = min(max(float(opacity), 0.0), 1.0)
+    x = min(max(float(x), 0.0), 1.0)
+    y = min(max(float(y), 0.0), 1.0)
+
+    watermark_width = max(1, int(base.width * scale))
+    watermark_height = max(1, int(watermark.height * watermark_width / watermark.width))
+    watermark = watermark.resize((watermark_width, watermark_height), Image.Resampling.LANCZOS)
+
+    if opacity < 1:
+        alpha = watermark.getchannel("A")
+        watermark.putalpha(ImageEnhance.Brightness(alpha).enhance(opacity))
+
+    paste_x = min(max(0, int(base.width * x)), max(0, base.width - watermark.width))
+    paste_y = min(max(0, int(base.height * y)), max(0, base.height - watermark.height))
+    base.alpha_composite(watermark, (paste_x, paste_y))
+
+    save_image = base.convert("RGB") if output_path.suffix.lower() in {'.jpg', '.jpeg'} else base
+    save_kwargs = {}
+    if output_path.suffix.lower() in {'.jpg', '.jpeg'}:
+        save_kwargs["quality"] = config.getint('DEFAULT', 'quality')
+        save_kwargs["subsampling"] = config.getint('DEFAULT', 'subsampling')
+    if icc_profile:
+        save_kwargs["icc_profile"] = icc_profile
+    save_image.save(output_path, **save_kwargs)
+    return output_path
 
 
 @api.route('/')
@@ -159,6 +240,71 @@ def get_file():
     except PermissionError:
         return jsonify({'error': 'Permission denied'}), 403
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api.route('/api/v1/watermarks', methods=['GET'])
+def list_watermarks():
+    watermarks = [
+        {
+            'name': path.name,
+            'url': f"/api/v1/watermark/{quote(path.name)}",
+        }
+        for path in sorted(WATERMARK_DIR.iterdir(), key=lambda item: item.name.lower())
+        if _is_supported_watermark(path)
+    ]
+    return jsonify({'watermarks': watermarks})
+
+
+@api.route('/api/v1/watermark/<path:name>', methods=['GET'])
+def get_watermark(name):
+    try:
+        response = send_file(_get_watermark_path(name), as_attachment=False)
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    except FileNotFoundError:
+        return jsonify({'error': 'Watermark not found'}), 404
+    except ValueError:
+        return jsonify({'error': 'Invalid watermark path'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api.route('/api/v1/watermark/export', methods=['POST'])
+def export_watermark():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        required_fields = ['image_path', 'watermark_name', 'x', 'y', 'scale']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return jsonify({'error': f"Missing fields: {', '.join(missing_fields)}"}), 400
+
+        output_path = _apply_watermark(
+            data['image_path'],
+            data['watermark_name'],
+            data['x'],
+            data['y'],
+            data['scale'],
+            data.get('opacity', 1),
+        )
+
+        return jsonify({
+            'message': 'Watermark exported successfully',
+            'output_path': str(output_path),
+            'output_name': output_path.name,
+            'url': f"/api/v1/file?path={output_path}",
+        })
+    except FileNotFoundError as e:
+        return jsonify({'error': f'File not found: {e}'}), 404
+    except ValueError:
+        return jsonify({'error': 'Invalid watermark path'}), 400
+    except Exception as e:
+        logger.error(f"Export watermark failed: {e}")
         return jsonify({'error': str(e)}), 500
 
 

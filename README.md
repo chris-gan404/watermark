@@ -98,6 +98,6 @@ This project may work with [ExifTool](https://exiftool.org/). ExifTool is distri
 
 ## Attribution / 致谢
 
-This repository keeps the original `semi-utils` project attribution and license terms, and extends the tool with local workflow fixes plus the runtime draggable watermark feature.
+This repository is based on the original [`leslievan/semi-utils`](https://github.com/leslievan/semi-utils) project and keeps the original project attribution and license terms. This fork extends it with local workflow fixes plus the runtime draggable watermark feature.
 
-本仓库保留原 `semi-utils` 项目的作者署名和许可证条款，并在此基础上扩展了本地工作流修复以及运行时可拖拽水印功能。
+本仓库基于原项目 [`leslievan/semi-utils`](https://github.com/leslievan/semi-utils)，并保留原项目作者署名和许可证条款；本分支在此基础上扩展了本地工作流修复以及运行时可拖拽水印功能。

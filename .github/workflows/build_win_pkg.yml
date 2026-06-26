@@ -6,6 +6,9 @@ on:
       - 'v*' # Push events to matching build* tags
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   EXIFTOOL_URL: https://github.com/leslievan/fastfiles/raw/refs/heads/main/exiftool/exiftool-13.45_64.zip
   PACKAGE_BASENAME: semi-utils
@@ -50,9 +53,12 @@ jobs:
 
         # 4. 批量创建所需目录
         Write-Host "Creating subdirectories in $distPath"
-        @("input", "output", "exiftool") | ForEach-Object {
+        @("input", "output", "exiftool", "watermark") | ForEach-Object {
             New-Item -Path (Join-Path $distPath $_) -ItemType Directory -Force | Out-Null
         }
+
+        Write-Host "Copying documentation"
+        Copy-Item -Path "./README.md", "./LICENSE" -Destination $distPath -Force
 
         # 5. 下载并正确解压 ExifTool
         Write-Host "Downloading ExifTool..."
@@ -105,3 +111,23 @@ jobs:
       with:
         name: ${{ steps.artifact_name.outputs.artifact_name }}
         path: dist
+
+    - name: Compress Release Package
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: pwsh
+      run: |
+        $artifactName = "${{ steps.artifact_name.outputs.artifact_name }}"
+        Compress-Archive -Path "./dist/*" -DestinationPath "${artifactName}.zip" -Force
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Semi-Utils ${{ github.ref_name }}
+        body: |
+          Changes:
+          - Add runtime draggable watermark selection from the root `watermark/` folder.
+          - Export positioned watermark images from the web preview.
+          - Preserve source ICC profiles when exporting runtime watermarks.
+          - Keep attribution to the original leslievan/semi-utils project.
+        files: ${{ steps.artifact_name.outputs.artifact_name }}.zip

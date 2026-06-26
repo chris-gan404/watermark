@@ -138,7 +138,7 @@ def reverse_geocode_state_city(latitude: float, longitude: float) -> str:
     user_agent = config.get(
         'geocoding',
         'user_agent',
-        fallback='semi-utils/2.1.5 (local photo metadata tool)',
+        fallback='semi-utils/2.1.6 (local photo metadata tool)',
     )
     timeout = config.getfloat('geocoding', 'timeout', fallback=8.0)
 

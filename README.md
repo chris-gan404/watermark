@@ -1,42 +1,89 @@
-# semi-utils
+# semi-utils / Watermark
 
-> [![hugo-papermod](https://img.shields.io/badge/Semi--Utils-@LeslieVan-red)](https://github.com/leslievan/semi-utils)
-> [![download](https://img.shields.io/github/downloads/leslievan/semi-utils/total.svg)](https://github.com/leslievan/semit-utils/releases)
-> [![release](https://img.shields.io/github/v/release/leslievan/semi-utils)](https://github.com/leslievan/semi-utils/releases)
-> [![license](https://img.shields.io/github/license/leslievan/semi-utils)](https://github.com/leslievan/semi-utils/blob/master/LICENSE)
-> ![language](https://img.shields.io/github/languages/top/leslievan/semi-utils?color=orange)
+> A photo watermarking utility for batch watermark generation, EXIF rendering, image layout processing, and export quality control.
 >
-> **这是一个用于给照片批量添加水印、处理照片像素比、图像色彩和质量的工具。**
+> 一个用于批量添加照片水印、渲染 EXIF 信息、处理图片版式以及控制导出质量的工具。
 
-如果您觉得程序对您有所帮助的话，可以点击 [Sponsor](https:/su/cdn.lsvm.xyz/wechat.jpg) 按钮请作者喝杯咖啡，谢谢！
+## Features / 功能
 
+- Batch-generate photo watermarks from reusable JSON templates.
+- Render camera model, lens, focal length, aperture, shutter speed, ISO, shooting time, and brand logos from EXIF data.
+- Support multiple layout styles, including classic EXIF watermarks, centered logo watermarks, blurred backgrounds, rounded corners, shadows, and social-media-friendly margins.
+- Keep template files editable so custom text, logos, and styles can be adjusted without changing code.
+- Provide a Flask-based local web interface for previewing and processing images.
 
-## 开发文档
+- 支持通过可复用的 JSON 模板批量生成照片水印。
+- 可从 EXIF 信息中渲染相机型号、镜头、焦距、光圈、快门、ISO、拍摄时间和品牌 Logo。
+- 支持多种版式：经典 EXIF 水印、居中 Logo 水印、背景模糊、圆角、阴影和适合社交媒体分享的留白样式。
+- 模板文件可直接编辑，方便在不改代码的情况下调整文字、Logo 和视觉样式。
+- 提供基于 Flask 的本地网页界面，用于预览和处理图片。
 
-**[Wiki](../../wiki)**
+## Installation / 安装
 
-## 效果展示
+Requires Python 3.13 or newer.
 
-| 模板                                     | 描述                                      | 效果                                      |
-|----------------------------------------|-----------------------------------------|-----------------------------------------|
-| [standard1](./static/standard1.json)   | 经典 EXIF 水印，包含相机型号、镜头、焦距、光圈、快门、ISO、拍摄时间和相机品牌 Logo | ![standard1](./static/standard1.jpeg)   |
-| [standard2](./static/standard2.json)   | 在 standard1 基础上添加圆角、阴影效果和留白，适合社交媒体分享 | ![standard2](./static/standard2.jpeg)   |
-| [nikon_blur](./static/nikon_blur.json) | 尼康风格水印，相机型号中的红色「Z」字高亮，配合模糊背景效果 | ![nikon_blur](./static/nikon_blur.jpeg) |
-| [blur](./static/blur.json)             | 简洁风格，相机型号+参数垂直居中展示，配合模糊背景效果 | ![blur](./static/blur.jpeg)             |
-| [normal1](./static/normal1.json)       | 极简风格，右下角显示拍摄参数，低调不抢眼 | ![normal1](./static/normal1.jpeg)       |
-| [normal2](./static/normal2.json)       | 文件夹名称+拍摄时间，橙色文字，简洁实用 | ![normal2](./static/normal2.jpeg)       |
-| [center_logo](./static/center_logo.json) | 中心 Logo 水印，可自定义四周文字内容 | ![center_logo](./static/center_logo.jpeg)       |
+需要 Python 3.13 或更高版本。
 
+```bash
+pip install -r requirements.txt
+```
 
-## 许可证
+## Usage / 使用
 
-Semi-Utils 的发布基于 [Apache License 2.0](LICENSE).
+Start the local web app:
 
-### exiftool
+启动本地网页应用：
 
-Semi-Utils 引用了 [exiftool](https://exiftool.org/)，其发布基于 [GPL v1 + Artistic License 2.0](https://exiftool.org/#license)。
+```bash
+python app.py
+```
 
+Then open the local address printed in the terminal and process images through the web interface.
 
-## 关于
+随后打开终端中显示的本地地址，即可在网页界面中处理图片。
 
-[![Stargazers over time](https://starchart.cc/leslievan/semi-utils.svg)](https://starchart.cc/leslievan/semi-utils)
+## Templates / 模板
+
+| Template / 模板 | Description / 描述 | Preview / 效果 |
+| --- | --- | --- |
+| [standard1](./static/standard1.json) | Classic EXIF watermark with camera model, lens, focal length, aperture, shutter speed, ISO, shooting time, and camera brand logo.<br>经典 EXIF 水印，包含相机型号、镜头、焦距、光圈、快门、ISO、拍摄时间和相机品牌 Logo。 | ![standard1](./static/standard1.jpeg) |
+| [standard2](./static/standard2.json) | Adds rounded corners, shadows, and margins on top of `standard1`, suitable for social media sharing.<br>在 `standard1` 基础上添加圆角、阴影和留白，适合社交媒体分享。 | ![standard2](./static/standard2.jpeg) |
+| [nikon_blur](./static/nikon_blur.json) | Nikon-style watermark with a highlighted red `Z` in the camera model and a blurred background.<br>尼康风格水印，相机型号中的红色 `Z` 高亮，并配合背景模糊效果。 | ![nikon_blur](./static/nikon_blur.jpeg) |
+| [blur](./static/blur.json) | Minimal centered layout with camera model and shooting parameters over a blurred background.<br>简洁居中版式，相机型号和参数垂直居中展示，并配合背景模糊效果。 | ![blur](./static/blur.jpeg) |
+| [normal1](./static/normal1.json) | Minimal lower-right shooting-parameter watermark.<br>极简风格，在右下角显示拍摄参数，低调不抢眼。 | ![normal1](./static/normal1.jpeg) |
+| [normal2](./static/normal2.json) | Folder name plus shooting time with simple orange text.<br>文件夹名称加拍摄时间，橙色文字，简洁实用。 | ![normal2](./static/normal2.jpeg) |
+| [center_logo](./static/center_logo.json) | Center logo watermark with customizable text around it.<br>中心 Logo 水印，可自定义四周文字内容。 | ![center_logo](./static/center_logo.jpeg) |
+
+## Development / 开发
+
+Run tests with:
+
+运行测试：
+
+```bash
+python -m pytest
+```
+
+Build scripts and CI workflows are included under `.github/workflows`.
+
+打包脚本和 CI 工作流位于 `.github/workflows` 目录。
+
+## License / 许可证
+
+This project is released under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+本项目基于 [PolyForm Noncommercial License 1.0.0](LICENSE) 发布。
+
+Commercial use is prohibited unless you obtain prior written permission from the copyright holder.
+
+未经版权方事先书面许可，禁止将本项目用于商业用途。
+
+Permitted uses include personal study, research, testing, hobby projects, education, and other noncommercial purposes allowed by the license.
+
+许可证允许个人学习、研究、测试、兴趣项目、教育以及其他非商业用途。
+
+### Third-party license / 第三方协议
+
+This project may work with [ExifTool](https://exiftool.org/). ExifTool is distributed under its own [GPL v1 + Artistic License 2.0](https://exiftool.org/#license), and its license terms are not changed by this repository's license.
+
+本项目可能配合 [ExifTool](https://exiftool.org/) 使用。ExifTool 基于其自身的 [GPL v1 + Artistic License 2.0](https://exiftool.org/#license) 发布，本仓库的许可证不会改变 ExifTool 的原始授权条款。

@@ -113,6 +113,44 @@
             touch-action: none;
             user-select: none;
         }
+
+        @media (min-width: 1024px) {
+            .main-layout {
+                grid-template-rows: minmax(0, 1.35fr) minmax(240px, 0.9fr);
+            }
+
+            .config-panel {
+                grid-column: 1 / span 3;
+                grid-row: 1 / span 2;
+            }
+
+            .file-panel {
+                grid-column: 4 / span 5;
+                grid-row: 2;
+            }
+
+            .preview-shell,
+            .control-shell {
+                display: contents;
+            }
+
+            .preview-panel {
+                grid-column: 4 / span 9;
+                grid-row: 1;
+            }
+
+            .watermark-panel {
+                grid-column: 9 / span 2;
+                grid-row: 2;
+                height: 100%;
+            }
+
+            .action-panel {
+                grid-column: 11 / span 2;
+                grid-row: 2;
+                height: 100%;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 h-screen w-full flex flex-col overflow-hidden text-sm"
@@ -135,10 +173,10 @@
 
 <!-- 主布局 -->
 <main class="flex-1 p-5 overflow-hidden">
-    <div class="grid grid-cols-12 gap-5 h-full">
+    <div class="main-layout grid grid-cols-12 gap-5 h-full lg:grid-rows-[minmax(0,1.35fr)_minmax(240px,0.9fr)]">
 
         <!-- Col 1: 配置管理 -->
-        <div class="col-span-12 lg:col-span-3 flex flex-col h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 overflow-hidden animate-fade-in">
+        <div class="config-panel order-1 col-span-12 lg:col-span-3 lg:row-span-2 flex flex-col h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 overflow-hidden animate-fade-in">
             <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +301,7 @@
         </div>
 
         <!-- Col 2: 文件树 -->
-        <div class="col-span-12 lg:col-span-6 flex flex-col h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 overflow-hidden animate-slide-up" style="animation-delay: 0.1s">
+        <div class="file-panel order-3 col-span-12 lg:order-none lg:col-span-5 lg:col-start-4 lg:row-start-2 flex flex-col h-full min-h-[240px] bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 overflow-hidden animate-slide-up" style="animation-delay: 0.1s">
             <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +317,7 @@
                 </button>
             </div>
 
-            <div class="flex-1 overflow-hidden p-5 flex flex-col">
+            <div class="flex-1 overflow-hidden p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
 
                 <!-- 输入树 -->
                 <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -404,7 +442,7 @@
                 </div>
 
                 <!-- 输出树 -->
-                <div class="flex-1 flex flex-col min-h-0 overflow-hidden mt-4">
+                <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
                     <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 shrink-0">
                         <span class="config-label">输出文件</span>
                     </div>
@@ -487,10 +525,10 @@
         </div>
 
         <!-- Col 3: 预览与执行 -->
-        <div class="col-span-12 lg:col-span-3 flex flex-col h-full gap-5 overflow-y-auto pr-1">
+        <div class="preview-shell order-2 col-span-12 grid grid-cols-1 h-full gap-5 overflow-hidden lg:contents">
 
             <!-- 预览卡片 -->
-            <div class="flex-1 min-h-[280px] bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 flex flex-col overflow-hidden animate-slide-up" style="animation-delay: 0.2s">
+            <div class="preview-panel lg:col-span-9 lg:col-start-4 lg:row-start-1 h-full min-h-[420px] bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 flex flex-col overflow-hidden animate-slide-up" style="animation-delay: 0.2s">
                 <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,8 +580,9 @@
                 </div>
             </div>
 
+            <div class="control-shell flex flex-col gap-5 min-h-0 overflow-y-auto pr-1 lg:contents">
             <!-- 水印控制 -->
-            <div class="bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 animate-slide-up" style="animation-delay: 0.25s">
+            <div class="watermark-panel lg:col-span-2 lg:col-start-9 lg:row-start-2 h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 overflow-hidden animate-slide-up" style="animation-delay: 0.25s">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -587,20 +626,11 @@
                                class="mt-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-500">
                     </div>
 
-                    <button @click="exportWatermark()"
-                            :disabled="!canExportWatermark"
-                            class="w-full py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" :class="{'animate-spin': loading.watermarkExport}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path x-show="!loading.watermarkExport" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v10m0 0l-3-3m3 3l3-3M5 20h14" />
-                            <path x-show="loading.watermarkExport" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9" />
-                        </svg>
-                        导出带水印图片
-                    </button>
                 </div>
             </div>
 
             <!-- 操作卡片 -->
-            <div class="bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 relative overflow-hidden animate-slide-up" style="animation-delay: 0.3s">
+            <div class="action-panel lg:col-span-2 lg:col-start-11 lg:row-start-2 h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 relative overflow-hidden animate-slide-up" style="animation-delay: 0.3s">
 
                 <!-- 进度条覆盖层 -->
                 <div x-show="progress.active"
@@ -687,6 +717,7 @@
                     开始执行
                 </button>
                 <p class="mt-2 text-center text-xs text-slate-400" x-show="!canStart">请保存配置并选择文件</p>
+            </div>
             </div>
         </div>
     </div>
@@ -889,7 +920,7 @@
     function app() {
         return {
             isStatic: true,
-            loading: {files: false, process: false, watermarks: false, watermarkExport: false},
+            loading: {files: false, process: false, watermarks: false},
             config: {input_folder: '', output_folder: '', template: '{}', template_name: '', quality: 100, override_existed: false},
             availableTemplates: [],
             watermarks: [],
@@ -983,10 +1014,6 @@
 
             get hasWatermarkReady() {
                 return !!(this.preview.isFile && this.preview.url && this.selectedWatermarkUrl && this.previewGeometry.width > 0);
-            },
-
-            get canExportWatermark() {
-                return this.hasWatermarkReady && !!this.preview.path && !this.loading.watermarkExport;
             },
 
             async init() {
@@ -1198,40 +1225,6 @@
                 window.setTimeout(() => {
                     this.watermark.suppressStageClick = false;
                 }, 200);
-            },
-
-            async exportWatermark() {
-                if (!this.canExportWatermark) return;
-                this.loading.watermarkExport = true;
-                try {
-                    const res = await fetch('/api/v1/watermark/export', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            image_path: this.preview.path,
-                            watermark_name: this.watermark.selected,
-                            x: this.watermark.x,
-                            y: this.watermark.y,
-                            scale: this.watermark.scale,
-                            opacity: this.watermark.opacity
-                        })
-                    });
-                    const json = await res.json();
-                    if (!res.ok) {
-                        throw new Error(json.error || '导出失败');
-                    }
-
-                    this.preview.url = `/api/v1/file?path=${encodeURIComponent(json.output_path)}`;
-                    this.preview.name = json.output_name || json.output_path;
-                    this.preview.path = json.output_path;
-                    this.preview.isFile = true;
-                    this.toast("带水印图片已导出", 'success');
-                    await this.fetchFiles(false);
-                } catch (e) {
-                    this.toast("导出失败: " + e.message, 'error');
-                } finally {
-                    this.loading.watermarkExport = false;
-                }
             },
 
             async fetchConfig() {

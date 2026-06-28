@@ -43,6 +43,7 @@ class TextSegment:
     text: str
     font_path: Optional[str] = None
     height: int = 100
+    max_width: Optional[int] = None
     is_bold: bool = False
     color: str = "black"
     trim: bool = False
@@ -56,6 +57,7 @@ class TextSegment:
             text=data.get("text"),
             font_path=data.get("font_path", None),
             height=int(data.get("height", 100)),
+            max_width=data.get("max_width"),
             color=data.get("color", "black"),
             is_bold=data.get("is_bold", False),
             trim=data.get("trim", False),
@@ -193,20 +195,13 @@ class GradientColorGenerator(Generator):
 
 class RichTextGenerator(Generator):
     @staticmethod
-    def generate(segment: TextSegment) -> Image.Image:
-        font = load_font(segment.font_path)
-
-        # 获取文本尺寸
+    def _render(segment: TextSegment, text: str, font: ImageFont.FreeTypeFont) -> Image.Image:
         metrics = font.getmetrics()
-        text = ' ' if not segment.text or segment.text == '' else segment.text
         bbox = font.getbbox(text)
-        # 创建透明画布
-        image = Image.new('RGBA', (int(bbox[2] - bbox[0]), metrics[0] + abs(metrics[1])), (0, 0, 0, 0))
+        image = Image.new('RGBA', (max(1, int(bbox[2] - bbox[0])), metrics[0] + abs(metrics[1])), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
-        # 直接绘制文本
         draw.text((0, 0), text, font=font, fill=_parse_color(segment.color))
 
-        # 使用 start_process 处理图片，解耦对 Filter 的直接依赖
         pipeline = [
             {
                 "processor_name": "trim",
@@ -220,9 +215,40 @@ class RichTextGenerator(Generator):
                 "save_buffer": False,
             }
         ]
-        # 使用临时 buffer 路径（实际上是 image 对象）
         from processor.core import start_process
         return start_process(pipeline, input_path=None, output_path=None, initial_buffer=[image])
+
+    @staticmethod
+    def _fit_text(segment: TextSegment, font: ImageFont.FreeTypeFont) -> str:
+        text = ' ' if not segment.text or segment.text == '' else str(segment.text)
+        max_width = int(segment.max_width) if segment.max_width else 0
+        if max_width <= 0:
+            return text
+
+        if RichTextGenerator._render(segment, text, font).width <= max_width:
+            return text
+
+        ellipsis = '...'
+        if RichTextGenerator._render(segment, ellipsis, font).width > max_width:
+            return ''
+
+        low, high = 0, len(text)
+        best = ellipsis
+        while low <= high:
+            mid = (low + high) // 2
+            candidate = text[:mid].rstrip() + ellipsis
+            if RichTextGenerator._render(segment, candidate, font).width <= max_width:
+                best = candidate
+                low = mid + 1
+            else:
+                high = mid - 1
+        return best
+
+    @staticmethod
+    def generate(segment: TextSegment) -> Image.Image:
+        font = load_font(segment.font_path)
+        text = RichTextGenerator._fit_text(segment, font)
+        return RichTextGenerator._render(segment, text, font)
 
     def process(self, ctx: PipelineContext):
         img = RichTextGenerator.generate(TextSegment.from_dict(ctx))

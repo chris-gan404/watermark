@@ -58,25 +58,10 @@ def _unique_output_path(path: Path) -> Path:
     raise RuntimeError(f"Unable to find available output filename for {path.name}")
 
 
-def _apply_watermark(input_path: str, watermark_name: str, x: float, y: float, scale: float, opacity: float) -> Path:
-    source_path = Path(os.path.abspath(input_path))
+def _compose_watermark(image_path: Path, output_path: Path, watermark_name: str, x: float, y: float, scale: float, opacity: float) -> Path:
     watermark_path = _get_watermark_path(watermark_name)
-    input_folder = Path(config.get('DEFAULT', 'input_folder')).resolve()
-    output_folder = Path(config.get('DEFAULT', 'output_folder')).resolve()
 
-    try:
-        relative_path = source_path.resolve().relative_to(input_folder)
-        output_path = output_folder / relative_path
-    except ValueError:
-        output_path = output_folder / source_path.name
-
-    output_path = output_path.with_name(f"{output_path.stem}_watermark{output_path.suffix}")
-    if output_path.suffix.lower() in {'.heic', '.heif'}:
-        output_path = output_path.with_suffix('.jpg')
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path = _unique_output_path(output_path)
-
-    with Image.open(source_path) as source_image:
+    with Image.open(image_path) as source_image:
         icc_profile = source_image.info.get("icc_profile")
         base = ImageOps.exif_transpose(source_image).convert("RGBA")
 
@@ -109,6 +94,44 @@ def _apply_watermark(input_path: str, watermark_name: str, x: float, y: float, s
         save_kwargs["icc_profile"] = icc_profile
     save_image.save(output_path, **save_kwargs)
     return output_path
+
+
+def _apply_watermark(input_path: str, watermark_name: str, x: float, y: float, scale: float, opacity: float) -> Path:
+    source_path = Path(os.path.abspath(input_path))
+    input_folder = Path(config.get('DEFAULT', 'input_folder')).resolve()
+    output_folder = Path(config.get('DEFAULT', 'output_folder')).resolve()
+
+    try:
+        relative_path = source_path.resolve().relative_to(input_folder)
+        output_path = output_folder / relative_path
+    except ValueError:
+        output_path = output_folder / source_path.name
+
+    output_path = output_path.with_name(f"{output_path.stem}_watermark{output_path.suffix}")
+    if output_path.suffix.lower() in {'.heic', '.heif'}:
+        output_path = output_path.with_suffix('.jpg')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path = _unique_output_path(output_path)
+    return _compose_watermark(source_path, output_path, watermark_name, x, y, scale, opacity)
+
+
+def _runtime_watermark_from_request(data: dict) -> dict | None:
+    watermark = data.get('watermark')
+    if not watermark or watermark.get('enabled') is not True:
+        return None
+
+    watermark_name = watermark.get('name') or watermark.get('watermark_name')
+    if not watermark_name:
+        raise ValueError('Missing runtime watermark name')
+
+    _get_watermark_path(watermark_name)
+    return {
+        'name': watermark_name,
+        'x': watermark.get('x', 0.05),
+        'y': watermark.get('y', 0.05),
+        'scale': watermark.get('scale', 0.2),
+        'opacity': watermark.get('opacity', 1),
+    }
 
 
 @api.route('/')
@@ -316,6 +339,12 @@ def handle_process():
 
     data = request.get_json()
     input_files = data['selectedItems']
+    try:
+        runtime_watermark = _runtime_watermark_from_request(data)
+    except FileNotFoundError as e:
+        return jsonify({'error': f'Watermark not found: {e}'}), 404
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     input_folder = config.get('DEFAULT', 'input_folder')
     output_folder = config.get('DEFAULT', 'output_folder')
 
@@ -353,6 +382,16 @@ def handle_process():
             }
             final_template = template.render(context)
             start_process(json.loads(final_template), input_path, output_path=output_path)
+            if runtime_watermark:
+                _compose_watermark(
+                    Path(output_path),
+                    Path(output_path),
+                    runtime_watermark['name'],
+                    runtime_watermark['x'],
+                    runtime_watermark['y'],
+                    runtime_watermark['scale'],
+                    runtime_watermark['opacity'],
+                )
             return True, False, None
 
         except Exception as e:

@@ -114,6 +114,10 @@
             user-select: none;
         }
 
+        [x-cloak] {
+            display: none !important;
+        }
+
         @media (min-width: 1024px) {
             .main-layout {
                 grid-template-rows: minmax(0, 1.35fr) minmax(240px, 0.9fr);
@@ -567,13 +571,15 @@
                                  x-effect="if(preview.isFile) $el.src = preview.url"
                                  @load="onPreviewImageLoad()"
                                  class="absolute inset-0 w-full h-full object-contain p-2 pointer-events-none">
-                            <img x-show="hasWatermarkReady"
+                            <img x-cloak
+                                 x-show="watermark.enabled && hasWatermarkReady"
                                  :src="selectedWatermarkUrl"
                                  :style="watermarkOverlayStyle()"
                                  @load="onWatermarkImageLoad($event)"
                                  @click.stop
                                  @pointerdown.stop.prevent="startWatermarkDrag($event)"
                                  draggable="false"
+                                 style="display: none;"
                                  class="watermark-overlay absolute z-10 cursor-move drop-shadow-lg">
                         </div>
                     </div>
@@ -584,13 +590,13 @@
             <!-- 水印控制 -->
             <div class="watermark-panel lg:col-span-2 lg:col-start-9 lg:row-start-2 h-full bg-white/80 backdrop-blur rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 p-5 shrink-0 overflow-hidden animate-slide-up" style="animation-delay: 0.25s">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-5" />
-                        </svg>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox"
+                               id="runtime-watermark-enabled"
+                               x-model="watermark.enabled"
+                               class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20 cursor-pointer accent-primary-500">
                         <h3 class="font-bold text-slate-700">运行时水印</h3>
-                    </div>
+                    </label>
                     <button @click="fetchWatermarks()"
                             title="刷新水印"
                             class="p-2 rounded-lg hover:bg-primary-50 text-slate-400 hover:text-primary-600 transition-all duration-200">
@@ -931,6 +937,7 @@
             preview: {url: '', name: '', path: '', isFile: false},
             previewGeometry: {x: 0, y: 0, width: 0, height: 0, naturalWidth: 0, naturalHeight: 0},
             watermark: {
+                enabled: false,
                 selected: '',
                 x: 0.05,
                 y: 0.05,
@@ -1013,10 +1020,11 @@
             },
 
             get hasWatermarkReady() {
-                return !!(this.preview.isFile && this.preview.url && this.selectedWatermarkUrl && this.previewGeometry.width > 0);
+                return !!(this.isRuntimeWatermarkEnabled() && this.preview.isFile && this.preview.url && this.selectedWatermarkUrl && this.previewGeometry.width > 0);
             },
 
             async init() {
+                this.watermark.enabled = false;
                 Alpine.store('app', this);
                 this.initEditor();
 
@@ -1153,8 +1161,12 @@
 
             watermarkOverlayStyle() {
                 const geometry = this.previewGeometry;
+                if (!this.isRuntimeWatermarkEnabled() || !this.preview.isFile || !this.preview.url || !this.selectedWatermarkUrl || geometry.width <= 0) {
+                    return 'display: none;';
+                }
                 const size = this.watermarkPreviewSize();
                 return [
+                    'display: block',
                     `left: ${geometry.x + geometry.width * this.watermark.x}px`,
                     `top: ${geometry.y + geometry.height * this.watermark.y}px`,
                     `width: ${size.width}px`,
@@ -1225,6 +1237,23 @@
                 window.setTimeout(() => {
                     this.watermark.suppressStageClick = false;
                 }, 200);
+            },
+
+            runtimeWatermarkPayload() {
+                if (!this.isRuntimeWatermarkEnabled() || !this.watermark.selected) return null;
+                return {
+                    enabled: true,
+                    name: this.watermark.selected,
+                    x: this.watermark.x,
+                    y: this.watermark.y,
+                    scale: this.watermark.scale,
+                    opacity: this.watermark.opacity
+                };
+            },
+
+            isRuntimeWatermarkEnabled() {
+                const checkbox = document.getElementById('runtime-watermark-enabled');
+                return this.watermark.enabled === true && (!checkbox || checkbox.checked === true);
             },
 
             async fetchConfig() {
@@ -1464,10 +1493,16 @@
                 this.progress.completeMessage = '';
 
                 try {
+                    const payload = {selectedItems: this.selectedItems};
+                    const runtimeWatermark = this.runtimeWatermarkPayload();
+                    if (runtimeWatermark) {
+                        payload.watermark = runtimeWatermark;
+                    }
+
                     const response = await fetch('/api/v1/start_process', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({selectedItems: this.selectedItems})
+                        body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {

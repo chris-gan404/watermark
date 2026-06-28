@@ -11,6 +11,15 @@ from processor.core import ImageProcessor, PipelineContext, start_process, get_p
 from processor.types import Alignment
 
 
+def _open_optional_image(path):
+    if path is None:
+        return None
+    path = str(path).strip()
+    if not path or path.lower() in {'none', 'null'}:
+        return None
+    return Image.open(path).convert('RGBA')
+
+
 class FilterProcessor(ImageProcessor, ABC):
     def category(self) -> str:
         return "filter"
@@ -253,22 +262,22 @@ class WatermarkFilter(FilterProcessor):
         left_margin = ctx.getint("left_margin", 0)
         right_margin = ctx.getint("right_margin", 0)
         top_margin = ctx.getint("top_margin", 0)
-        bottom_margin = ctx.getint("bottom_margin", int(img.height * .12))
+        is_portrait = img.height > img.width
+        bottom_margin = ctx.getint("bottom_margin", int(img.height * (.075 if is_portrait else .12)))
         middle_spacing = ctx.getint("middle_spacing", int(bottom_margin * .05))
         right_alignment = ctx.getenum("right_alignment", Alignment.RIGHT, Alignment)
 
-        for t_s in [ctx.get("left_top"), ctx.get("left_bottom"), ctx.get("right_top"), ctx.get("right_bottom")]:
+        text_configs = [ctx.get("left_top"), ctx.get("left_bottom"), ctx.get("right_top"), ctx.get("right_bottom")]
+        for index, t_s in enumerate(text_configs):
             if "height" not in t_s:
-                t_s["height"] = int(bottom_margin * .3)
+                if is_portrait:
+                    t_s["height"] = int(bottom_margin * (.22 if index in (0, 2) else .16))
+                else:
+                    t_s["height"] = int(bottom_margin * .3)
 
-        left_top = start_process([ctx.get("left_top")])
-        left_bottom = start_process([ctx.get("left_bottom")])
-        right_top = start_process([ctx.get("right_top")])
-        right_bottom = start_process([ctx.get("right_bottom")])
-
-        left_logo = Image.open(ctx.get("left_logo")).convert('RGBA') if ctx.get("left_logo") else None
-        right_logo = Image.open(ctx.get("right_logo")).convert('RGBA') if ctx.get("right_logo") else None
-        center_logo = Image.open(ctx.get("center_logo")).convert('RGBA') if ctx.get("center_logo") else None
+        left_logo = _open_optional_image(ctx.get("left_logo"))
+        right_logo = _open_optional_image(ctx.get("right_logo"))
+        center_logo = _open_optional_image(ctx.get("center_logo"))
         center_logo_height = ctx.getint("center_logo_height")
 
         canvas_width = img.width + left_margin + right_margin
@@ -301,6 +310,22 @@ class WatermarkFilter(FilterProcessor):
             center_x = (canvas.width - center_logo.width) // 2
             center_y = footer_start_y + ((canvas.height - footer_start_y) - center_logo.height) // 2
             canvas.paste(center_logo, (center_x, center_y), mask=center_logo if center_logo.mode == 'RGBA' else None)
+
+        def render_texts():
+            return (
+                start_process([ctx.get("left_top")]),
+                start_process([ctx.get("left_bottom")]),
+                start_process([ctx.get("right_top")]),
+                start_process([ctx.get("right_bottom")]),
+            )
+
+        def set_text_max_width(text_config, max_width):
+            max_width = max(1, int(max_width))
+            text_config["max_width"] = max_width
+            for segment in text_config.get("text_segments", []):
+                segment["max_width"] = max_width
+
+        left_top, left_bottom, right_top, right_bottom = render_texts()
 
         # 文本处理
         elem_height = max(left_top.height + left_bottom.height, right_top.height + right_bottom.height) + middle_spacing
@@ -336,6 +361,42 @@ class WatermarkFilter(FilterProcessor):
         rb_x = right_content_end_x - right_bottom.width - common_spacing  # 右对齐计算
         if Alignment.LEFT == right_alignment:
             rt_x = rb_x = min(rt_x, rb_x)
+
+        def right_group_left(text_left, logo_size):
+            if not right_logo:
+                return text_left
+            return text_left - common_spacing - delimiter_width - common_spacing - logo_size
+
+        left_text_right = l_x + max(left_top.width, left_bottom.width)
+        current_text_left = min(rt_x, rb_x)
+        current_group_left = right_group_left(current_text_left, elem_height)
+        if current_group_left < left_text_right + common_spacing or current_group_left < left_margin:
+            content_start_x = left_margin + left_logo_width + common_spacing
+            right_text_end_x = canvas_width - right_margin - common_spacing
+            right_prefix_width = elem_height + delimiter_width + 2 * common_spacing if right_logo else 0
+            available_text_width = right_text_end_x - content_start_x - right_prefix_width - common_spacing
+            if available_text_width > 0:
+                left_max_width = max(1, int(available_text_width * 0.38))
+                right_max_width = max(1, available_text_width - left_max_width - common_spacing)
+                set_text_max_width(ctx.get("left_top"), left_max_width)
+                set_text_max_width(ctx.get("left_bottom"), left_max_width)
+                set_text_max_width(ctx.get("right_top"), right_max_width)
+                set_text_max_width(ctx.get("right_bottom"), right_max_width)
+
+                left_top, left_bottom, right_top, right_bottom = render_texts()
+                elem_height = max(left_top.height + left_bottom.height,
+                                  right_top.height + right_bottom.height) + middle_spacing
+                elem_margin = int((bottom_margin - elem_height) / 2)
+                bottom_dist_lt = elem_margin + left_bottom.height + middle_spacing + left_top.height
+                lt_y = canvas_height - bottom_dist_lt
+                bottom_dist_lb = elem_margin + left_bottom.height
+                lb_y = canvas_height - bottom_dist_lb
+                rt_y = (lt_y + left_top.height) - right_top.height
+                rt_x = right_content_end_x - right_top.width - common_spacing
+                rb_y = (lb_y + left_bottom.height) - right_bottom.height
+                rb_x = right_content_end_x - right_bottom.width - common_spacing
+                if Alignment.LEFT == right_alignment:
+                    rt_x = rb_x = min(rt_x, rb_x)
 
         # 6. 绘制文本元素
         # 使用 mask 确保透明背景的文字能正确叠加

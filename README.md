@@ -54,9 +54,9 @@ Location reverse-geocoding can be configured in `config/config.ini`. Results are
 
 ### Runtime watermark / 运行时水印
 
-Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG, and WebP files are supported. After starting the web app, select a preview image, choose a watermark in the "运行时水印" panel, adjust its size and opacity, drag it to the desired position, and click "导出带水印图片". The exported image is written to the configured output folder while preserving the source ICC color profile when available.
+Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG, and WebP files are supported. After starting the web app, select a preview image, enable the "运行时水印" checkbox, choose a watermark, adjust its size and opacity, drag it to the desired position, and click the main "开始执行" button. If the checkbox is not enabled, runtime watermark preview and export are both disabled. The exported image is written to the configured output folder while preserving the source ICC color profile when available.
 
-将水印图片放入项目根目录的 `watermark/` 文件夹，支持 PNG、JPG、JPEG 和 WebP。启动网页后，先选择需要预览的图片，再在“运行时水印”区域选择水印，调整大小和透明度，拖拽到目标位置后点击“导出带水印图片”。导出的图片会写入配置的输出目录，并在可用时保留源图 ICC 色彩配置。
+将水印图片放入项目根目录的 `watermark/` 文件夹，支持 PNG、JPG、JPEG 和 WebP。启动网页后，先选择需要预览的图片，勾选“运行时水印”，选择水印并调整大小、透明度和位置，然后点击主流程的“开始执行”。如果未勾选该选项，预览和导出都不会添加运行时水印。导出的图片会写入配置的输出目录，并在可用时保留源图 ICC 色彩配置。
 
 ## Templates / 模板
 
@@ -69,6 +69,18 @@ Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG,
 | [normal1](./static/normal1.json) | Minimal lower-right shooting-parameter watermark.<br>极简风格，在右下角显示拍摄参数，低调不抢眼。 | ![normal1](./static/normal1.jpeg) |
 | [normal2](./static/normal2.json) | Folder name plus shooting time with simple orange text.<br>文件夹名称加拍摄时间，橙色文字，简洁实用。 | ![normal2](./static/normal2.jpeg) |
 | [center_logo](./static/center_logo.json) | Center logo watermark with customizable text around it.<br>中心 Logo 水印，可自定义四周文字内容。 | ![center_logo](./static/center_logo.jpeg) |
+
+## Release notes / 更新日志
+
+### v2.1.7 - 2026-06-28
+
+- Enlarged the image preview area and moved runtime controls into the lower workflow row.
+- Made runtime watermark export strictly opt-in: unchecked means no preview overlay and no exported runtime watermark.
+- Removed the separate runtime "export watermarked image" action; runtime watermarks now follow the main batch process.
+- Improved portrait EXIF watermark sizing to better match mobile-style bottom metadata bars.
+- Added width-aware text truncation with `...` to avoid overlapping long address/location strings.
+- Preserved output behavior for files outside the configured input folder by exporting them safely by filename.
+- Windows package SHA256: `E32C0857CC657D7DAED4F288B16805D71C909753E736D42F938BB30A38EE1CE8`.
 
 ## Build / 打包
 

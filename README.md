@@ -72,7 +72,7 @@ Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG,
 
 ## Release notes / 更新日志
 
-### v2.1.7 - 2026-06-28
+### v2.1.8 - 2026-06-28
 
 - Enlarged the image preview area and moved runtime controls into the lower workflow row.
 - Made runtime watermark export strictly opt-in: unchecked means no preview overlay and no exported runtime watermark.
@@ -80,7 +80,6 @@ Put watermark images in the repository root `watermark/` folder. PNG, JPG, JPEG,
 - Improved portrait EXIF watermark sizing to better match mobile-style bottom metadata bars.
 - Added width-aware text truncation with `...` to avoid overlapping long address/location strings.
 - Preserved output behavior for files outside the configured input folder by exporting them safely by filename.
-- Windows package SHA256: `E32C0857CC657D7DAED4F288B16805D71C909753E736D42F938BB30A38EE1CE8`.
 
 ## Build / 打包
 

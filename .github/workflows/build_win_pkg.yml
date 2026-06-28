@@ -126,8 +126,10 @@ jobs:
         name: Semi-Utils ${{ github.ref_name }}
         body: |
           Changes:
-          - Add runtime draggable watermark selection from the root `watermark/` folder.
-          - Export positioned watermark images from the web preview.
-          - Preserve source ICC profiles when exporting runtime watermarks.
-          - Keep attribution to the original leslievan/semi-utils project.
+          - Enlarge the image preview area and move runtime controls into the lower workflow row.
+          - Make runtime watermark preview/export strictly opt-in via the checkbox.
+          - Remove the separate runtime watermark export action; runtime watermarks now follow the main batch process.
+          - Improve portrait EXIF watermark sizing for mobile-style bottom metadata bars.
+          - Truncate long address/location text with `...` to avoid overlap.
+          - Preserve safe output behavior for files outside the configured input folder.
         files: ${{ steps.artifact_name.outputs.artifact_name }}.zip
